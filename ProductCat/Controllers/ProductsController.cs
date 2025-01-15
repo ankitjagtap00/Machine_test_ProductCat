@@ -27,7 +27,8 @@ namespace ProductCat.Controllers
 
         public async Task<IActionResult> Create()
         {
-            await PopulateCategoriesDropDown();
+            var categories = await _categoryService.GetAllCategoriesAsync();
+            ViewData["Categories"] = new SelectList(categories, "CategoryId", "CategoryName");
             return View(new ProductViewModel());
         }
 
@@ -41,7 +42,8 @@ namespace ProductCat.Controllers
                 if (!isNameUnique)
                 {
                     ModelState.AddModelError("ProductName", "A product with this name already exists.");
-                    await PopulateCategoriesDropDown();
+                    var categoriesList = await _categoryService.GetAllCategoriesAsync();
+                    ViewData["Categories"] = new SelectList(categoriesList, "CategoryId", "CategoryName");
                     return View(productViewModel);
                 }
 
@@ -58,7 +60,9 @@ namespace ProductCat.Controllers
                 }
                 ModelState.AddModelError("", result.Message);
             }
-            await PopulateCategoriesDropDown();
+
+            var categories = await _categoryService.GetAllCategoriesAsync();
+            ViewData["Categories"] = new SelectList(categories, "CategoryId", "CategoryName");
             return View(productViewModel);
         }
 
@@ -190,8 +194,8 @@ namespace ProductCat.Controllers
             var categories = await _categoryService.GetAllCategoriesAsync();
             ViewBag.Categories = new SelectList(
                 categories,
-                "Id",
-                "Name",
+                "CategoryId",
+                "CategoryName",
                 selectedCategoryId
             );
         }

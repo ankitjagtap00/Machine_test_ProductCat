@@ -12,6 +12,6 @@ namespace ProductCat.Services.Interfaces
         Task<ServiceResult> CreateCategoryAsync(Category category);
         Task<ServiceResult> UpdateCategoryAsync(Category category);
         Task<ServiceResult> DeleteCategoryAsync(int id);
-        Task<IEnumerable> GetAllCategoriesAsync();
+        Task<IEnumerable<Category>> GetAllCategoriesAsync();
     }
 }

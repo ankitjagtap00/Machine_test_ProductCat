@@ -16,152 +16,99 @@ namespace ProductCat.Services
             _context = context;
         }
 
-        public IEnumerable<Category> GetCategories()
+        public async Task<PaginatedList<Category>> GetCategoriesAsync(int pageIndex = 1, int pageSize = 10)
         {
-            return _context.Categories.OrderBy(c => c.CategoryName).ToList();
+            var query = _context.Categories.OrderBy(c => c.CategoryName);
+            return await PaginatedList<Category>.CreateAsync(query, pageIndex, pageSize);
         }
 
-        public Category GetCategoryById(int id)
+        public async Task<Category> GetCategoryByIdAsync(int id)
         {
-            return _context.Categories.Find(id);
+            return await _context.Categories.FindAsync(id);
         }
 
-        public ServiceResult CreateCategory(Category category)
+        public async Task<bool> IsCategoryNameUniqueAsync(string name, int? id = null)
+        {
+            return !await _context.Categories.AnyAsync(c =>
+                c.CategoryName.ToLower() == name.ToLower() &&
+                (!id.HasValue || c.CategoryId != id.Value));
+        }
+
+        public async Task<ServiceResult> CreateCategoryAsync(Category category)
         {
             try
             {
-                if (CategoryExists(category.CategoryName))
+                if (!await IsCategoryNameUniqueAsync(category.CategoryName))
                 {
-                    return new ServiceResult
-                    {
-                        Success = false,
-                        Message = "A category with this name already exists."
-                    };
+                    return ServiceResult.Fail("A category with this name already exists.");
                 }
 
-                _context.Categories.Add(category);
-                _context.SaveChanges();
+                await _context.Categories.AddAsync(category);
+                await _context.SaveChangesAsync();
 
-                return new ServiceResult { Success = true };
+                return ServiceResult.Ok();
             }
             catch (Exception ex)
             {
-                return new ServiceResult
-                {
-                    Success = false,
-                    Message = $"Error creating category: {ex.Message}"
-                };
+                return ServiceResult.Fail($"Error creating category: {ex.Message}");
             }
         }
 
-        public ServiceResult UpdateCategory(Category category)
+        public async Task<ServiceResult> UpdateCategoryAsync(Category category)
         {
             try
             {
-                if (CategoryExists(category.CategoryName, category.CategoryId))
+                if (!await IsCategoryNameUniqueAsync(category.CategoryName, category.CategoryId))
                 {
-                    return new ServiceResult
-                    {
-                        Success = false,
-                        Message = "A category with this name already exists."
-                    };
+                    return ServiceResult.Fail("A category with this name already exists.");
                 }
 
                 _context.Entry(category).State = EntityState.Modified;
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
 
-                return new ServiceResult { Success = true };
+                return ServiceResult.Ok();
             }
             catch (Exception ex)
             {
-                return new ServiceResult
-                {
-                    Success = false,
-                    Message = $"Error updating category: {ex.Message}"
-                };
+                return ServiceResult.Fail($"Error updating category: {ex.Message}");
             }
         }
 
-        public ServiceResult DeleteCategory(int id)
+        public async Task<ServiceResult> DeleteCategoryAsync(int id)
         {
             try
             {
-                var category = _context.Categories.Find(id);
+                var category = await _context.Categories.FindAsync(id);
 
                 if (category == null)
                 {
-                    return new ServiceResult
-                    {
-                        Success = false,
-                        Message = "Category not found."
-                    };
+                    return ServiceResult.Fail("Category not found.");
                 }
 
-                if (_context.Products.Any(p => p.CategoryId == id))
+                if (await _context.Products.AnyAsync(p => p.CategoryId == id))
                 {
-                    return new ServiceResult
-                    {
-                        Success = false,
-                        Message = "Cannot delete category that has associated products."
-                    };
+                    return ServiceResult.Fail("Cannot delete category that has associated products.");
                 }
 
                 _context.Categories.Remove(category);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
 
-                return new ServiceResult { Success = true };
+                return ServiceResult.Ok();
             }
             catch (Exception ex)
             {
-                return new ServiceResult
-                {
-                    Success = false,
-                    Message = $"Error deleting category: {ex.Message}"
-                };
+                return ServiceResult.Fail($"Error deleting category: {ex.Message}");
             }
         }
 
-        public bool CategoryExists(string name, int? excludeId = null)
+        public async Task<IEnumerable<Category>> GetAllCategoriesAsync()
         {
-            return _context.Categories.Any(c =>
-                c.CategoryName.ToLower() == name.ToLower() &&
-                (!excludeId.HasValue || c.CategoryId != excludeId.Value));
+            return await _context.Categories
+                .OrderBy(c => c.CategoryName)
+                .ToListAsync();
         }
 
-        public Task<PaginatedList<Category>> GetCategoriesAsync(int pageIndex = 1, int pageSize = 10)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<Category> GetCategoryByIdAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<bool> IsCategoryNameUniqueAsync(string name, int? id = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<ServiceResult> CreateCategoryAsync(Category category)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<ServiceResult> UpdateCategoryAsync(Category category)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<ServiceResult> DeleteCategoryAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IEnumerable> GetAllCategoriesAsync()
-        {
-            throw new NotImplementedException();
-        }
+       
     }
 
 

@@ -21,6 +21,26 @@ namespace ProductCat.Controllers
             return View(categories);
         }
 
+
+        public async Task<IActionResult> AddInitialCategories()
+        {
+            var categories = new List<Category>
+    {
+        new Category { CategoryName = "Electronics" },
+        new Category { CategoryName = "Clothing" },
+        new Category { CategoryName = "Books" },
+        new Category { CategoryName = "Home & Kitchen" },
+        new Category { CategoryName = "Sports & Outdoors" }
+    };
+
+            foreach (var category in categories)
+            {
+                await _categoryService.CreateCategoryAsync(category);
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
         public IActionResult Create()
         {
             return View(new Category());
